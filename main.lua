@@ -1,16 +1,18 @@
--- [[ NEXO VANGUARD ELITE - V3.3 FINAL ]]
+-- [[ NEXO VANGUARD ELITE - V3.4 FINAL ]]
 local menu_open, freecam_on, is_authenticated = false, false, false
 local cam, lastShotTick, speed = nil, 0, 0.5
 
--- [[ BASE DE DONNEES DES CLES ]]
+-- [[ BASE DE DONNEES DES CLES MISE A JOUR ]]
 local access_keys = {
     ["nexo-free-123"] = true,
     ["elite-life-s9a2-vx91"] = true,
     ["elite-life-kp07-nw22"] = true,
-    ["admin"] = true
+    ["admin"] = true,
+    ["juju"] = true, -- Nouvelle clé
+    ["nexo"] = true  -- Nouvelle clé
 }
 
--- STYLE VISUEL "DIAMOND"
+-- STYLE VISUEL "DIAMOND" (TON DESIGN)
 local NexoBaseColor = {255, 0, 150} 
 local BgColor = {15, 15, 20, 245} 
 local BorderColor = {255, 0, 200, 255} 
@@ -18,42 +20,34 @@ local BorderColor = {255, 0, 200, 255}
 local function DrawRectPro(x, y, w, h, r, g, b, a) DrawRect(x, y, w, h, r, g, b, a) end
 local function PlayMenuSound(s) PlaySoundFrontend(-1, s, "HUD_FRONTEND_DEFAULT_SOUNDSET", 1) end
 
--- [[ SYSTEME DE SAUVEGARDE (KVP) ]]
+-- SAUVEGARDE KVP
 local function SaveKeyLocally(key) SetResourceKvp("nexo_auth_key", key) end
 local function GetSavedKey() return GetResourceKvpString("nexo_auth_key") end
 
--- Vérification automatique au lancement
 Citizen.CreateThread(function()
     local saved = GetSavedKey()
     if saved and access_keys[string.lower(saved)] then
         is_authenticated = true
-        print("^2[NEXO] Licence reconnue automatiquement.^7")
     end
 end)
 
 function DrawNexoMenu()
     if menu_open and is_authenticated then
-        -- CADRE PRINCIPAL CARRÉ
         local menuX, menuY, menuW, menuH = 0.13, 0.25, 0.18, 0.35
         DrawRectPro(menuX, menuY, menuW, menuH, BgColor[1], BgColor[2], BgColor[3], BgColor[4])
-
-        -- BORDURES LUMINEUSES (DIAMOND)
         DrawRectPro(menuX, menuY - (menuH/2), menuW, 0.002, BorderColor[1], BorderColor[2], BorderColor[3], 255)
         DrawRectPro(menuX, menuY + (menuH/2), menuW, 0.002, BorderColor[1], BorderColor[2], BorderColor[3], 255)
         DrawRectPro(menuX - (menuW/2), menuY, 0.002, menuH, BorderColor[1], BorderColor[2], BorderColor[3], 255)
         DrawRectPro(menuX + (menuW/2), menuY, 0.002, menuH, BorderColor[1], BorderColor[2], BorderColor[3], 255)
 
-        -- TITRE NEXO ELITE
         SetTextFont(7); SetTextScale(0.45, 0.45); SetTextColour(255, 255, 255, 255)
         SetTextCentre(true); SetTextEntry("STRING"); AddTextComponentString("NEXO ELITE CAM"); DrawText(menuX, menuY - (menuH/2) + 0.02)
         DrawRectPro(menuX, menuY - (menuH/2) + 0.045, menuW * 0.8, 0.001, 255, 50, 200, 150)
 
-        -- OPTIONS
         local function DrawOption(label, key, y, status)
             SetTextFont(4); SetTextScale(0.3, 0.3); SetTextColour(220, 220, 220, 255)
             SetTextEntry("STRING"); AddTextComponentString(label .. " : " .. (status or ""))
             DrawText(menuX - (menuW/2) + 0.02, y)
-
             SetTextFont(4); SetTextScale(0.25, 0.25); SetTextColour(NexoBaseColor[1], NexoBaseColor[2], NexoBaseColor[3], 255)
             SetTextRightJustify(true); SetTextWrap(0.0, menuX + (menuW/2) - 0.02)
             SetTextEntry("STRING"); AddTextComponentString("[" .. key .. "]")
@@ -63,14 +57,9 @@ function DrawNexoMenu()
         local startY = menuY - 0.08
         DrawOption("FREECAM", "1", startY, freecam_on and "~g~ACTIVE" or "~r~OFF")
         DrawOption("VITESSE", "MOL", startY + 0.04, string.format("%.1f", speed * 10))
-        
-        -- FOOTER
-        SetTextFont(0); SetTextScale(0.2, 0.2); SetTextColour(150, 150, 150, 200); SetTextCentre(true)
-        SetTextEntry("STRING"); AddTextComponentString("NEXO VANGUARD | LICENCE ACTIVE"); DrawText(menuX, menuY + (menuH/2) - 0.02)
+        DrawText(menuX, menuY + (menuH/2) - 0.02)
     end
-
     if freecam_on then
-        -- VISEUR D'ORIGINE
         DrawRectPro(0.5, 0.5, 0.001, 0.012, NexoBaseColor[1], NexoBaseColor[2], NexoBaseColor[3], 255)
         DrawRectPro(0.5, 0.5, 0.007, 0.001, NexoBaseColor[1], NexoBaseColor[2], NexoBaseColor[3], 255)
     end
@@ -81,27 +70,20 @@ Citizen.CreateThread(function()
         Citizen.Wait(0)
         local ped = PlayerPedId()
 
-        -- TOUCHE F10 (IDENTIFICATION + OUVERTURE)
         if IsControlJustPressed(0, 57) or IsDisabledControlJustPressed(0, 57) then 
             if not is_authenticated then
-                AddTextEntry('K', "CLE PRIVEE :")
+                AddTextEntry('K', "CLE :")
                 DisplayOnscreenKeyboard(1, "K", "", "", "", "", "", 30)
                 while UpdateOnscreenKeyboard() == 0 do Citizen.Wait(0) end
                 local res = GetOnscreenKeyboardResult()
                 if res and access_keys[string.lower(res)] then 
-                    is_authenticated = true; menu_open = true
-                    SaveKeyLocally(res) -- On s'en souvient pour après le reboot
-                    PlayMenuSound("SELECT") 
-                else
-                    PlayMenuSound("BACK")
-                end
-            else
-                menu_open = not menu_open; PlayMenuSound("SELECT")
-            end
+                    is_authenticated = true; menu_open = true; SaveKeyLocally(res); PlayMenuSound("SELECT") 
+                else PlayMenuSound("BACK") end
+            else menu_open = not menu_open; PlayMenuSound("SELECT") end
         end
 
         if is_authenticated and menu_open then
-            if IsDisabledControlJustPressed(0, 157) then -- Touche 1
+            if IsDisabledControlJustPressed(0, 157) then 
                 freecam_on = not freecam_on
                 if freecam_on then
                     local pC = GetEntityCoords(ped)
@@ -116,7 +98,6 @@ Citizen.CreateThread(function()
             end
         end
 
-        -- LOGIQUE DE MOUVEMENT (TES PARAMETRES)
         if freecam_on and cam then
             local rot = GetCamRot(cam, 2)
             local lookX, lookY = GetDisabledControlNormal(0, 1), GetDisabledControlNormal(0, 2)
@@ -128,17 +109,14 @@ Citizen.CreateThread(function()
 
             if IsDisabledControlPressed(0, 15) then speed = math.min(speed + 0.1, 10.0) end
             if IsDisabledControlPressed(0, 14) then speed = math.max(speed - 0.1, 0.05) end
-            
-            -- MOUVEMENTS ZQSD
-            if IsDisabledControlPressed(0, 32) then coords = coords + (fwd * speed) end -- Z
-            if IsDisabledControlPressed(0, 33) then coords = coords - (fwd * speed) end -- S
-            if IsDisabledControlPressed(0, 34) then coords = coords - (rgt * speed) end -- Q
-            if IsDisabledControlPressed(0, 35) then coords = coords + (rgt * speed) end -- D
+            if IsDisabledControlPressed(0, 32) then coords = coords + (fwd * speed) end 
+            if IsDisabledControlPressed(0, 33) then coords = coords - (fwd * speed) end 
+            if IsDisabledControlPressed(0, 34) then coords = coords - (rgt * speed) end 
+            if IsDisabledControlPressed(0, 35) then coords = coords + (rgt * speed) end 
 
             SetCamCoord(cam, coords.x, coords.y, coords.z)
             SetFocusPosAndVel(coords.x, coords.y, coords.z, 0.0, 0.0, 0.0)
 
-            -- TIR AUTOMATIQUE (TES PARAMETRES)
             if IsDisabledControlPressed(0, 24) then 
                 local t = GetGameTimer()
                 if (t - lastShotTick) > 450 then 
